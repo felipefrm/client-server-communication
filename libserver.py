@@ -4,12 +4,18 @@ import json
 import io
 import struct
 
-request_search = {
-    "morpheus": "Follow the white rabbit. \U0001f430",
-    "ring": "In the caves beneath the Misty Mountains. \U0001f48d",
-    "\U0001f436": "\U0001f43e Playing ball! \U0001f3d0",
-}
-
+database = [
+    {
+    "name": "Felipe",
+    "gender": "male",
+    "age": "21",
+    },
+    {
+    "name": "Camila",
+    "gender": "female",
+    "age": "26",
+    },
+]
 
 class Message:
     def __init__(self, selector, sock, addr):
@@ -90,9 +96,24 @@ class Message:
 
     def _create_response_json_content(self):
         action = self.request.get("action")
-        if action == "search":
+        # print(action)
+        if action == "SELECT":
             query = self.request.get("value")
-            answer = request_search.get(query) or f'No match for "{query}".'
+            if query == '*':
+                answer = database
+            else:
+                answer = 'Não implementado ainda.'
+                # answer = database.get(query) or f'No match for "{query}".'
+            content = {"result": answer}
+        elif action == 'INSERT':
+            query = self.request.get("value")
+            query = query[1:].split(':')
+            database.append({
+                "name": query[0],
+                "gender": query[1], 
+                "age": query[2]
+            })
+            answer = "Inserido!"
             content = {"result": answer}
         else:
             content = {"result": f'Error: invalid action "{action}".'}

@@ -4,25 +4,35 @@ import sys
 import socket
 import selectors
 import traceback
+import re
 
 import libclient
 
 sel = selectors.DefaultSelector()
 
 
-def create_request(action, value):
-    if action == "search":
+def create_request(command):
+    action = re.findall("[\dA-Za-z]*", command)[0].upper()
+    if action == "INSERT":
+        args = command.split(action, 1)[1]
         return dict(
             type="text/json",
             encoding="utf-8",
-            content=dict(action=action, value=value),
+            content=dict(action=action, value=args),
         )
-    else:
+    elif action == "SELECT":
+        args = command.split(action, 1)[1]
         return dict(
-            type="binary/custom-client-binary-type",
-            encoding="binary",
-            content=bytes(action + value, encoding="utf-8"),
+            type="text/json",
+            encoding="utf-8",
+            content=dict(action=action, value=args),
         )
+    # else:
+    #     return dict(
+    #         type="binary/custom-client-binary-type",
+    #         encoding="binary",
+    #         content=bytes(action + value, encoding="utf-8"),
+    #     )
 
 
 def start_connection(host, port, request):
@@ -36,13 +46,13 @@ def start_connection(host, port, request):
     sel.register(sock, events, data=message)
 
 
-if len(sys.argv) != 5:
-    print("usage:", sys.argv[0], "<host> <port> <action> <value>")
+if len(sys.argv) != 4:
+    print("usage:", sys.argv[0], "<host> <port> <query>")
     sys.exit(1)
 
 host, port = sys.argv[1], int(sys.argv[2])
-action, value = sys.argv[3], sys.argv[4]
-request = create_request(action, value)
+command = sys.argv[3]
+request = create_request(command)
 start_connection(host, port, request)
 
 try:
