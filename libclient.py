@@ -83,11 +83,8 @@ class Message:
     def _process_response_json_content(self):
         content = self.response
         result = content.get("result")
+        # print("got result: ", json.dumps(result, indent=3, sort_keys=True))
         print(f"got result: {result}")
-
-    def _process_response_binary_content(self):
-        content = self.response
-        print(f"got response: {repr(content)}")
 
     def process_events(self, mask):
         if mask & selectors.EVENT_READ:
@@ -145,18 +142,11 @@ class Message:
         content = self.request["content"]
         content_type = self.request["type"]
         content_encoding = self.request["encoding"]
-        if content_type == "text/json":
-            req = {
-                "content_bytes": self._json_encode(content, content_encoding),
-                "content_type": content_type,
-                "content_encoding": content_encoding,
-            }
-        else:
-            req = {
-                "content_bytes": content,
-                "content_type": content_type,
-                "content_encoding": content_encoding,
-            }
+        req = {
+            "content_bytes": self._json_encode(content, content_encoding),
+            "content_type": content_type,
+            "content_encoding": content_encoding,
+        }
         message = self._create_message(**req)
         self._send_buffer += message
         self._request_queued = True
@@ -191,18 +181,9 @@ class Message:
             return
         data = self._recv_buffer[:content_len]
         self._recv_buffer = self._recv_buffer[content_len:]
-        if self.jsonheader["content-type"] == "text/json":
-            encoding = self.jsonheader["content-encoding"]
-            self.response = self._json_decode(data, encoding)
-            print("received response", repr(self.response), "from", self.addr)
-            self._process_response_json_content()
-        else:
-            # Binary or unknown content-type
-            self.response = data
-            print(
-                f'received {self.jsonheader["content-type"]} response from',
-                self.addr,
-            )
-            self._process_response_binary_content()
+        encoding = self.jsonheader["content-encoding"]
+        self.response = self._json_decode(data, encoding)
+        print("received response", repr(self.response), "from", self.addr)
+        self._process_response_json_content()
         # Close when response has been processed
         self.close()

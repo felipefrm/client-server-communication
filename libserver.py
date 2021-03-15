@@ -94,27 +94,34 @@ class Message:
         message = message_hdr + jsonheader_bytes + content_bytes
         return message
 
+    def _create_response_select(self):
+        query = self.request.get("value")
+        if query == '*':
+            answer = database
+        else:
+            answer = 'Error: invalid argument for SELECT statment.'
+        return {"result": answer}
+
+    def _create_response_insert(self):
+        query = self.request.get("value")
+        query = query[1:].split(':')
+        if (len(query) == 3):
+            database.append({
+                "name": query[0].strip(),
+                "gender": query[1].strip(), 
+                "age": query[2].strip()
+            })
+            answer = "Data inserted successfully."
+        else:
+            answer = "Error: INSERT statment must have exactly 3 arguments."
+        return {"result": answer}
+
     def _create_response_json_content(self):
         action = self.request.get("action")
-        # print(action)
         if action == "SELECT":
-            query = self.request.get("value")
-            if query == '*':
-                answer = database
-            else:
-                answer = 'Não implementado ainda.'
-                # answer = database.get(query) or f'No match for "{query}".'
-            content = {"result": answer}
+            content = self._create_response_select()
         elif action == 'INSERT':
-            query = self.request.get("value")
-            query = query[1:].split(':')
-            database.append({
-                "name": query[0],
-                "gender": query[1], 
-                "age": query[2]
-            })
-            answer = "Inserido!"
-            content = {"result": answer}
+            content = self._create_response_insert()
         else:
             content = {"result": f'Error: invalid action "{action}".'}
         content_encoding = "utf-8"
@@ -122,15 +129,6 @@ class Message:
             "content_bytes": self._json_encode(content, content_encoding),
             "content_type": "text/json",
             "content_encoding": content_encoding,
-        }
-        return response
-
-    def _create_response_binary_content(self):
-        response = {
-            "content_bytes": b"First 10 bytes of request: "
-            + self.request[:10],
-            "content_type": "binary/custom-server-binary-type",
-            "content_encoding": "binary",
         }
         return response
 
@@ -212,26 +210,14 @@ class Message:
             return
         data = self._recv_buffer[:content_len]
         self._recv_buffer = self._recv_buffer[content_len:]
-        if self.jsonheader["content-type"] == "text/json":
-            encoding = self.jsonheader["content-encoding"]
-            self.request = self._json_decode(data, encoding)
-            print("received request", repr(self.request), "from", self.addr)
-        else:
-            # Binary or unknown content-type
-            self.request = data
-            print(
-                f'received {self.jsonheader["content-type"]} request from',
-                self.addr,
-            )
+        encoding = self.jsonheader["content-encoding"]
+        self.request = self._json_decode(data, encoding)
+        print("received request", repr(self.request), "from", self.addr)
         # Set selector to listen for write events, we're done reading.
         self._set_selector_events_mask("w")
 
     def create_response(self):
-        if self.jsonheader["content-type"] == "text/json":
-            response = self._create_response_json_content()
-        else:
-            # Binary or unknown content-type
-            response = self._create_response_binary_content()
+        response = self._create_response_json_content()
         message = self._create_message(**response)
         self.response_created = True
         self._send_buffer += message

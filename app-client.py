@@ -10,29 +10,28 @@ import libclient
 
 sel = selectors.DefaultSelector()
 
-
 def create_request(command):
-    action = re.findall("[\dA-Za-z]*", command)[0].upper()
+    action = re.findall("[A-Za-z]*", command)[0]
+    args = command.split(action, 1)[1].strip()
+    action = action.upper()
     if action == "INSERT":
-        args = command.split(action, 1)[1]
         return dict(
             type="text/json",
             encoding="utf-8",
             content=dict(action=action, value=args),
         )
     elif action == "SELECT":
-        args = command.split(action, 1)[1]
         return dict(
             type="text/json",
             encoding="utf-8",
             content=dict(action=action, value=args),
         )
-    # else:
-    #     return dict(
-    #         type="binary/custom-client-binary-type",
-    #         encoding="binary",
-    #         content=bytes(action + value, encoding="utf-8"),
-    #     )
+    else:
+        return dict(
+            type="text/json",
+            encoding="utf-8",
+            content=dict(action=command),
+        )
 
 
 def start_connection(host, port, request):
@@ -47,11 +46,11 @@ def start_connection(host, port, request):
 
 
 if len(sys.argv) != 4:
-    print("usage:", sys.argv[0], "<host> <port> <query>")
+    print("usage:", sys.argv[0], "<host> <port> <action>")
     sys.exit(1)
 
 host, port = sys.argv[1], int(sys.argv[2])
-command = sys.argv[3]
+command = sys.argv[3].strip()
 request = create_request(command)
 start_connection(host, port, request)
 

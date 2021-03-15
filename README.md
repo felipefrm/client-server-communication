@@ -1,10 +1,13 @@
-# Socket Programming in Python (Guide)
-
-This is the source code for [Socket Programming in Python (Guide)](https://realpython.com/python-sockets/).
+# Basic interaction Client-Server using Socket in Python
 
 ## Requirements
 
 - [Python](https://www.python.org/) 3.6 or later.
+
+## References
+
+- Guide: [Socket Programming in Python](https://realpython.com/python-sockets/)
+- Repository: [python-socket-tutorial](https://github.com/realpython/materials/tree/master/python-sockets-tutorial)
 
 ## License
 
