@@ -46,7 +46,7 @@ def start_connection(host, port, request):
 
 
 if len(sys.argv) != 4:
-    print("usage:", sys.argv[0], "<host> <port> <action>")
+    print("usage:", sys.argv[0], "<host> <port> <command>")
     sys.exit(1)
 
 host, port = sys.argv[1], int(sys.argv[2])
